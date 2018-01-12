@@ -1,6 +1,7 @@
 # Load pickled data
 import pickle
 import os
+from IPython.core.debugger import set_trace
 
 # TODO: Fill this in based on where you saved the training and testing data
 
@@ -78,7 +79,7 @@ from itertools import groupby
 # Visualizations will be shown in the notebook.
 
 
-def plotSigns(X,y) -> np.ndarray:
+def plotSigns(X,y, fig) -> np.ndarray:
     #n_samples = []
     for i in (range (n_classes)):       
         #print (range (n_classes))    
@@ -88,7 +89,10 @@ def plotSigns(X,y) -> np.ndarray:
         
         #print(selected)
         
-        plt.imshow(selected[0, :, :, :]) # draw only first image of every class
+        if (X.shape[3]==1):
+            plt.imshow(selected[0, :, :, -1], cmap='gray') # takes x*y dimensions draw only first image of every class grayscale
+        else:  
+            plt.imshow(selected[0, :, :, :]) # draw only first image of every class
         
         #print("selected")
         #print(selected[0, :, :, :])
@@ -96,7 +100,7 @@ def plotSigns(X,y) -> np.ndarray:
         plt.title(all_labels[i])
         plt.axis('off')
         #n_samples.append(len(selected))
-    #plt.show()
+    fig.show()
 
     
 # Distribution of images
@@ -120,11 +124,11 @@ def plotHistogram(y, title):
 
 plt.close('all')
 
-plt.figure(1, figsize=(20,20))
-plotSigns(X_train, y_train)
+f1 = plt.figure(1, figsize=(20,20))
+plotSigns(X_train, y_train, f1)
 
 ## Histogram training set
-plt.figure(2, figsize=(20,20))
+f2 = plt.figure(2, figsize=(20,20))
 plotHistogram(y_train, "Histogram of Trainining Set")
 
 
@@ -132,6 +136,54 @@ plotHistogram(y_train, "Histogram of Trainining Set")
 #plt.figure(3, figsize=(20,20))
 #plotHistogram(y_valid, "Histogram of Validation Set")
 
-## Histogram test set
-plt.figure(4, figsize=(20,20))
-plotHistogram(y_test, "Histogram of Test Set")
+### Histogram test set
+#plt.figure(4, figsize=(20,20))
+#plotHistogram(y_test, "Histogram of Test Set")
+
+
+
+#### Step 2: Design and Test a Model Architecture
+
+### Preprocess the data here. It is required to normalize the data. Other preprocessing steps could include 
+
+from sklearn.utils import shuffle
+import cv2
+
+# Shuffle data
+X_train, y_train = shuffle(X_train, y_train)
+
+ 
+
+### converting to grayscale, etc.
+def grayScale(images) -> np.ndarray:
+    #YCrCb = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
+    #return np.resize(YCrCb[:,:,0], (32,32,1))
+    #s = images.shape[0:3]
+    #s += (1,) # for grayscale only 1 channel
+    #return_arr = np.ndarray(s)
+    #return_arr[:] = 0
+    #i = 0
+    #for image in images:
+        #img = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        #return_arr[i, :, :, :] = img[:, :, np.newaxis]
+        #i += 1
+    #return return_arr
+    return (np.sum(images/3, axis=3, keepdims=True))
+
+X_train_g = grayScale(X_train) 
+X_test_g = grayScale(X_test) 
+X_valid_g = grayScale(X_valid) 
+
+
+# Normalize
+def normalize(data):
+    return (data - 128) / 128
+
+X_train_ng = normalize(X_train_g) 
+X_test_ng = normalize(X_test_g) 
+X_valid_ng = normalize(X_valid_g)
+
+
+print("last")
+f3 = plt.figure(3, figsize=(20,20))
+plotSigns(X_train_ng, y_train, f3)
