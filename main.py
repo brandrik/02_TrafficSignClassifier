@@ -156,18 +156,6 @@ X_train, y_train = shuffle(X_train, y_train)
 
 ### converting to grayscale, etc.
 def grayScale(images) -> np.ndarray:
-    #YCrCb = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
-    #return np.resize(YCrCb[:,:,0], (32,32,1))
-    #s = images.shape[0:3]
-    #s += (1,) # for grayscale only 1 channel
-    #return_arr = np.ndarray(s)
-    #return_arr[:] = 0
-    #i = 0
-    #for image in images:
-        #img = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        #return_arr[i, :, :, :] = img[:, :, np.newaxis]
-        #i += 1
-    #return return_arr
     return (np.sum(images/3, axis=3, keepdims=True))
 
 X_train_g = grayScale(X_train) 
@@ -186,4 +174,101 @@ X_valid_ng = normalize(X_valid_g)
 
 print("last")
 f3 = plt.figure(3, figsize=(20,20))
-plotSigns(X_train_ng, y_train, f3)
+#plotSigns(X_train_ng, y_train, f3)
+
+
+
+#### MODEL ARCHITECTURE
+
+from tensorflow.contrib.layers import flatten
+import tensorflow as tf
+
+def LeNet(x, n_labels):    
+    # Arguments used for tf.truncated_normal, randomly defines variables for the weights and biases for each layer
+    mu = 0
+    sigma = 0.1
+    
+    # SOLUTION: Layer 1: Convolutional. Input = 32x32x1. Output = 28x28x6.
+    # 5 by 5 filter, input depth of 1 and output depth of 6
+    conv1_W = tf.Variable(tf.truncated_normal(shape=(5, 5, 1, 6), mean = mu, stddev = sigma))
+    
+    # Initialize the bias:
+    
+    conv1_b = tf.Variable(tf.zeros(6))
+    
+    # use conv2 function to convolve the filter with the input (over the images) 
+    # and add the bias
+    #conv1   = tf.nn.conv2d(x, conv1_W, strides=[1, 1, 1, 1], padding='VALID') + conv1_b
+    conv1   = tf.nn.conv2d(x, conv1_W, strides=[1, 1, 1, 1], use_cudnn_on_gpu=True, padding='VALID') + conv1_b
+
+    # SOLUTION: Activation. with relu activation function
+    conv1 = tf.nn.relu(conv1)
+
+    # SOLUTION: Pooling. Input = 28x28x6. Output = 14x14x6. 
+    # Resampling: 2 by 2 kernel with a 2 by 2 stride, which gives a pooling output of 14x14x6
+    conv1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID')
+
+    # SOLUTION: Layer 2: Convolutional. Output = 10x10x16.
+    conv2_W = tf.Variable(tf.truncated_normal(shape=(5, 5, 6, 16), mean = mu, stddev = sigma))
+    conv2_b = tf.Variable(tf.zeros(16))
+    #conv2   = tf.nn.conv2d(conv1, conv2_W, strides=[1, 1, 1, 1], padding='VALID') + conv2_b
+    conv2   = tf.nn.conv2d(conv1, conv2_W, strides=[1, 1, 1, 1], use_cudnn_on_gpu=True, padding='VALID') + conv2_b
+    
+    # SOLUTION: Activation.
+    conv2 = tf.nn.relu(conv2)
+
+    # SOLUTION: Pooling. Input = 10x10x16. Output = 5x5x16.
+    conv2 = tf.nn.max_pool(conv2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID')
+
+    # SOLUTION: Flatten. Input = 5x5x16. Output = 400.
+    # Flatten output into a vector
+    fc0   = flatten(conv2)
+    
+    # SOLUTION: Layer 3: Fully Connected. Input = 400. Output = 120.
+    fc1_W = tf.Variable(tf.truncated_normal(shape=(400, 120), mean = mu, stddev = sigma))
+    fc1_b = tf.Variable(tf.zeros(120))
+    fc1   = tf.matmul(fc0, fc1_W) + fc1_b
+    
+    # SOLUTION: Activation.
+    fc1    = tf.nn.relu(fc1)
+
+    # SOLUTION: Layer 4: Fully Connected. Input = 120. Output = 84.
+    fc2_W  = tf.Variable(tf.truncated_normal(shape=(120, 84), mean = mu, stddev = sigma))
+    fc2_b  = tf.Variable(tf.zeros(84))
+    fc2    = tf.matmul(fc1, fc2_W) + fc2_b
+    
+    # SOLUTION: Activation.
+    fc2    = tf.nn.relu(fc2)
+
+    # SOLUTION: Layer 5: Fully Connected. Input = 84. Output = 10.
+    fc3_W  = tf.Variable(tf.truncated_normal(shape=(84, n_labels), mean = mu, stddev = sigma))
+    fc3_b  = tf.Variable(tf.zeros(n_labels))
+    logits = tf.matmul(fc2, fc3_W) + fc3_b
+    
+    return logits
+
+# tf.one_hot() on windows in GPU mode failed with CUDA_ERROR_ILLEGAL_ADDRESS
+# https://github.com/tensorflow/tensorflow/issues/6509
+def one_hot_workaround(y, num_labels):
+    sparse_labels = tf.reshape(y, [-1, 1])
+    derived_size = tf.shape(sparse_labels)[0]
+    indices = tf.reshape(tf.range(0, derived_size, 1), [-1, 1])
+    concated = tf.concat(1, [indices, sparse_labels])
+    outshape = tf.concat(0, [tf.reshape(derived_size, [1]), tf.reshape(num_labels, [1])])
+    return tf.sparse_to_dense(concated, outshape, 1.0, 0.0)
+
+x = tf.placeholder(tf.float32, (None, 32, 32, 1))
+y = tf.placeholder(tf.int32, (None))
+
+# y_one_hot = tf.one_hot(y, n_classes)
+y_one_hot = one_hot_workaround(y, n_classes)
+logits = LeNet(x, n_classes)
+cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits, y_one_hot)
+loss_operation = tf.reduce_mean(cross_entropy)
+optimizer = tf.train.AdamOptimizer(learning_rate = 0.001)
+training_operation = optimizer.minimize(loss_operation)
+
+print('Done!')
+
+
+## TRAIN, VALIDATE AND TEST THE MODEL
