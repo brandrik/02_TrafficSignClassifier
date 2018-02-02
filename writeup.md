@@ -120,7 +120,28 @@ If a well known architecture was chosen:
 * What architecture was chosen?
 * Why did you believe it would be relevant to the traffic sign application?
 * How does the final model's accuracy on the training, validation and test set provide evidence that the model is working well?
- 
+
+
+# TRAINING DATA AUGMENTATION
+
+- translation [-2, 2] pixels
+- scaling [0.9, 1.1] ratio
+- rotation [-1.5, +1.5] degrees
+
+optional others:
+- affine transformations
+- brightness
+- contrast
+- blur
+
+
+# Improvements:
+
+1. Data Augmentation
+2. Sermanet like Architecture
+3. ELUs instead of ReLUs as sugegsted in 
+
+`FAST AND ACCURATE DEEP NETWORK LEARNING BY EXPONENTIAL LINEAR UNITS - Hochreiter 2016'
 
 ### Test a Model on New Images
 
