@@ -143,6 +143,18 @@ optional others:
 
 `FAST AND ACCURATE DEEP NETWORK LEARNING BY EXPONENTIAL LINEAR UNITS - Hochreiter 2016'
 
+## Parameters that can be varied
+
+Activation function variation:
+    1. absolute
+    2. abs(tanh) (not outdated?)
+
+Normalization
+    - after activation?
+    - subtraction and scaling
+
+Filterbank: (modification of convolution?)
+
 ### Test a Model on New Images
 
 #### 1. Choose five German traffic signs found on the web and provide them in the report. For each image, discuss what quality or qualities might be difficult to classify.
