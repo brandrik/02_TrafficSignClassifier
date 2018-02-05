@@ -137,9 +137,13 @@ optional others:
 
 # Improvements:
 
+There are a handful of approaches one can take–by improving the structure of the model,it deeper; by improving the initialization of the model, so that the error signal is evenly distributed throughout the model parameters; by collecting more data or trying a different regularization technique to prevent overfitting; and by using a more powerful optimization algorithm, so that better solutions can be reached in a reasonable amount of time.
+
 1. Data Augmentation
 2. Sermanet like Architecture
 3. ELUs instead of ReLUs as sugegsted in 
+4. 
+5. Nesterov-accelerated Adaptive Moment Estimation (Nadam) Optimizer, instead of Adam Optimizer
 
 `FAST AND ACCURATE DEEP NETWORK LEARNING BY EXPONENTIAL LINEAR UNITS - Hochreiter 2016'
 
@@ -149,9 +153,13 @@ Activation function variation:
     1. absolute
     2. abs(tanh) (not outdated?)
 
-Normalization
+Normalization (see Sermanet Paper)
     - after activation?
     - subtraction and scaling
+
+Use Nesterov Adam Optimizer instead of Adam Optimizer: (aim: using a more powerful optimization algorithm, so that better solutions can be reached in a reasonable amount of time)
+
+- requires to use keras for now, since it is not available in tensorflow
 
 Filterbank: (modification of convolution?)
 

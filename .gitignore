@@ -107,4 +107,5 @@ ENV/
 *.meta
 *.index
 *.data*
+!./lib/*
 
