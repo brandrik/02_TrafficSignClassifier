@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 
 
-from lib.data_exploration import *
-from lib.models import *
+from functionlib.data_exploration import *
+from functionlib.models import *
 
 #from lib.imageprocessing import *
 #from lib.data_exploration import *
